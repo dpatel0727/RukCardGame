@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gujarati 130 Card Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #2c5530, #4a7c59);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .game-phase {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .current-bid {
+            font-size: 1.1rem;
+        }
+
+        .trump-suit {
+            font-size: 1.1rem;
+        }
+
+        .players-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .player {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+        }
+
+        .player.current-turn {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.2);
+        }
+
+        .player.bidder {
+            border-color: #ff6b6b;
+            background: rgba(255,107,107,0.2);
+        }
+
+        .player.partner {
+            border-color: #4ecdc4;
+            background: rgba(78,205,196,0.2);
+        }
+
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-score {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .player-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .card {
+            width: 40px;
+            height: 60px;
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #ddd;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .card.playable {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 10px rgba(78,205,196,0.5);
+        }
+
+        .card.hearts { color: #e74c3c; }
+        .card.diamonds { color: #e74c3c; }
+        .card.clubs { color: #2c3e50; }
+        .card.spades { color: #2c3e50; }
+
+        .card.spade-2 {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #2c3e50;
+            border-color: #f39c12;
+        }
+
+        .trick-area {
+            background: rgba(0,0,0,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .trick-cards {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .trick-card {
+            width: 60px;
+            height: 90px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .trick-card.hearts, .trick-card.diamonds { color: #e74c3c; }
+        .trick-card.clubs, .trick-card.spades { color: #2c3e50; }
+
+        .trick-card.spade-2 {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #2c3e50;
+            border: 2px solid #f39c12;
+        }
+
+        .trick-card::after {
+            content: attr(data-player);
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.danger {
+            background: #e74c3c;
+        }
+
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+
+        .bidding-controls {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .bid-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .trump-selection {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .trump-btn {
+            padding: 10px 15px;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .trump-btn:hover {
+            background: white;
+            color: #2c5530;
+        }
+
+        .trump-btn.hearts, .trump-btn.diamonds {
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        .trump-btn.hearts:hover, .trump-btn.diamonds:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .partner-selection {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .card-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .scoreboard {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .scoreboard h3 {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .score-table {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .score-header {
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .score-cell {
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+
+        .game-over {
+            background: rgba(0,0,0,0.8);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .game-over-content {
+            background: white;
+            color: #2c5530;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .players-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                width: 35px;
+                height: 50px;
+                font-size: 0.6rem;
+            }
+            
+            .trick-card {
+                width: 50px;
+                height: 75px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>Gujarati 130 Card Game</h1>
+        </div>
+
+        <div class="game-info">
+            <div class="game-phase">Phase: <span id="current-phase">Setting up...</span></div>
+            <div class="current-bid">Current Bid: <span id="current-bid-value">None</span></div>
+            <div class="trump-suit">Trump: <span id="trump-suit">None</span></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="start-game" onclick="startGame()">Start New Game</button>
+            <button class="btn danger" id="redeal" onclick="redealCards()" style="display: none;">Re-deal Cards</button>
+        </div>
+
+        <div class="bidding-controls" id="bidding-controls" style="display: none;">
+            <h3>Bidding Phase</h3>
+            <p>Current turn: <span id="bidding-player"></span></p>
+            <div class="bid-buttons" id="bid-buttons"></div>
+            <button class="btn" onclick="passBid()">Pass</button>
+        </div>
+
+        <div class="trump-selection" id="trump-selection" style="display: none;">
+            <h3>Select Trump Suit:</h3>
+            <button class="trump-btn hearts" onclick="selectTrump('hearts')">♥ Hearts</button>
+            <button class="trump-btn diamonds" onclick="selectTrump('diamonds')">♦ Diamonds</button>
+            <button class="trump-btn clubs" onclick="selectTrump('clubs')">♣ Clubs</button>
+            <button class="trump-btn spades" onclick="selectTrump('spades')">♠ Spades</button>
+        </div>
+
+        <div class="partner-selection" id="partner-selection" style="display: none;">
+            <h3>Select Partner by calling a card:</h3>
+            <div class="card-selector" id="partner-cards"></div>
+        </div>
+
+        <div class="trick-area" id="trick-area" style="display: none;">
+            <h3>Current Trick</h3>
+            <div class="trick-cards" id="trick-cards"></div>
+            <p>Leader: <span id="trick-leader"></span></p>
+            <p>Points in this trick: <span id="trick-points">0</span></p>
+        </div>
+
+        <div class="players-container" id="players-container">
+            <!-- Players will be generated here -->
+        </div>
+
+        <div class="scoreboard">
+            <h3>Scoreboard (Game <span id="game-number">1</span>/10)</h3>
+            <div class="score-table" id="score-table">
+                <!-- Scores will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="game-over" id="game-over" style="display: none;">
+        <div class="game-over-content">
+            <h2>Game Over!</h2>
+            <p id="winner-text"></p>
+            <button class="btn" onclick="startNewSeries()">Start New Series</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            phase: 'setup', // setup, bidding, trump, partner, playing, trick-end, game-end
+            players: [],
+            currentPlayerIndex: 0,
+            deck: [],
+            currentBid: 0,
+            currentBidder: -1,
+            trumpSuit: null,
+            partnerCard: null,
+            partnerRevealed: false,
+            currentTrick: [],
+            trickLeader: 0,
+            gameNumber: 1,
+            scores: [],
+            totalGames: 10
+        };
+
+        // Card suits and values
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const values = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
+        const suitSymbols = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' };
+
+        // Initialize players
+        function initializePlayers() {
+            gameState.players = [];
+            for (let i = 0; i < 5; i++) {
+                gameState.players.push({
+                    name: `Player ${i + 1}`,
+                    cards: [],
+                    isCurrentTurn: false,
+                    isBidder: false,
+                    isPartner: false,
+                    gameScore: 0,
+                    totalScore: 0
+                });
+            }
+            
+            // Initialize scores array
+            if (gameState.scores.length === 0) {
+                gameState.scores = Array(5).fill(null).map(() => Array(gameState.totalGames).fill(0));
+            }
+        }
+
+        // Create deck (50 cards - remove 2 of hearts and 2 of clubs)
+        function createDeck() {
+            const deck = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    // Skip 2 of hearts and 2 of clubs
+                    if ((suit === 'hearts' && value === '2') || (suit === 'clubs' && value === '2')) {
+                        continue;
+                    }
+                    deck.push({ suit, value });
+                }
+            }
+            return shuffleDeck(deck);
+        }
+
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        // Deal cards to players
+        function dealCards() {
+            gameState.deck = createDeck();
+            
+            // Reset player cards and states
+            gameState.players.forEach(player => {
+                player.cards = [];
+                player.isBidder = false;
+                player.isPartner = false;
+                player.isCurrentTurn = false;
+            });
+            
+            // Deal 10 cards to each player
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 5; j++) {
+                    gameState.players[j].cards.push(gameState.deck.pop());
+                }
+            }
+            
+            // Sort cards for each player
+            gameState.players.forEach(player => {
+                player.cards.sort((a, b) => {
+                    if (a.suit !== b.suit) {
+                        return suits.indexOf(a.suit) - suits.indexOf(b.suit);
+                    }
+                    return values.indexOf(a.value) - values.indexOf(b.value);
+                });
+            });
+        }
+
+        // Start game
+        function startGame() {
+            initializePlayers();
+            dealCards();
+            startBiddingPhase();
+            updateDisplay();
+        }
+
+        // Start bidding phase
+        function startBiddingPhase() {
+            gameState.phase = 'bidding';
+            gameState.currentBid = 0;
+            gameState.currentBidder = -1;
+            gameState.currentPlayerIndex = 0;
+            gameState.players[0].isCurrentTurn = true;
+            
+            document.getElementById('current-phase').textContent = 'Bidding';
+            document.getElementById('bidding-controls').style.display = 'block';
+            document.getElementById('redeal').style.display = 'block';
+            
+            updateBiddingControls();
+        }
+
+        // Update bidding controls
+        function updateBiddingControls() {
+            const bidButtons = document.getElementById('bid-buttons');
+            bidButtons.innerHTML = '';
+            
+            const startBid = Math.max(95, gameState.currentBid + 5);
+            for (let bid = startBid; bid <= 130; bid += 5) {
+                const button = document.createElement('button');
+                button.className = 'btn';
+                button.textContent = bid;
+                button.onclick = () => makeBid(bid);
+                bidButtons.appendChild(button);
+            }
+            
+            document.getElementById('bidding-player').textContent = gameState.players[gameState.currentPlayerIndex].name;
+        }
+
+        // Make a bid
+        function makeBid(amount) {
+            gameState.currentBid = amount;
+            gameState.currentBidder = gameState.currentPlayerIndex;
+            
+            // Mark current bidder
+            gameState.players.forEach((player, index) => {
+                player.isBidder = (index === gameState.currentBidder);
+            });
+            
+            document.getElementById('current-bid-value').textContent = amount;
+            
+            // Move to next player
+            nextBiddingPlayer();
+        }
+
+        // Pass bid
+        function passBid() {
+            nextBiddingPlayer();
+        }
+
+        // Next bidding player
+        function nextBiddingPlayer() {
+            gameState.players[gameState.currentPlayerIndex].isCurrentTurn = false;
+            gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % 5;
+            gameState.players[gameState.currentPlayerIndex].isCurrentTurn = true;
+            
+            // Check if bidding should end (everyone has had a chance after a bid)
+            if (gameState.currentBid > 0) {
+                // Simple rule: end bidding after one round
+                let allPassed = true;
+                for (let i = 0; i < 5; i++) {
+                    if (i !== gameState.currentBidder) {
+                        // In a real game, you'd track who passed
+                        // For simplicity, we'll end bidding after current bidder's turn comes again
+                    }
+                }
+                
+                if (gameState.currentPlayerIndex === gameState.currentBidder) {
+                    endBidding();
+                    return;
+                }
+            }
+            
+            updateBiddingControls();
+            updateDisplay();
+        }
+
+        // End bidding phase
+        function endBidding() {
+            if (gameState.currentBid === 0) {
+                // No one bid, allow redeal
+                document.getElementById('current-phase').textContent = 'No bids - Click Re-deal';
+                document.getElementById('bidding-controls').style.display = 'none';
+                return;
+            }
+            
+            gameState.phase = 'trump';
+            gameState.players.forEach(player => player.isCurrentTurn = false);
+            gameState.players[gameState.currentBidder].isCurrentTurn = true;
+            
+            document.getElementById('current-phase').textContent = 'Trump Selection';
+            document.getElementById('bidding-controls').style.display = 'none';
+            document.getElementById('trump-selection').style.display = 'block';
+            document.getElementById('redeal').style.display = 'none';
+            
+            updateDisplay();
+        }
+
+        // Select trump suit
+        function selectTrump(suit) {
+            gameState.trumpSuit = suit;
+            gameState.phase = 'partner';
+            
+            document.getElementById('trump-suit').textContent = suitSymbols[suit] + ' ' + suit.charAt(0).toUpperCase() + suit.slice(1);
+            document.getElementById('current-phase').textContent = 'Partner Selection';
+            document.getElementById('trump-selection').style.display = 'none';
+            document.getElementById('partner-selection').style.display = 'block';
+            
+            showPartnerCards();
+            updateDisplay();
+        }
+
+        // Show partner card selection
+        function showPartnerCards() {
+            const container = document.getElementById('partner-cards');
+            container.innerHTML = '';
+            
+            // Create all possible cards for selection (excluding bidder's cards)
+            const allCards = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    if ((suit === 'hearts' && value === '2') || (suit === 'clubs' && value === '2')) {
+                        continue;
+                    }
+                    allCards.push({ suit, value });
+                }
+            }
+            
+            // Remove bidder's cards from selection
+            const bidderCards = gameState.players[gameState.currentBidder].cards;
+            const availableCards = allCards.filter(card => 
+                !bidderCards.some(bCard => bCard.suit === card.suit && bCard.value === card.value)
+            );
+            
+            availableCards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = `card ${card.suit}`;
+                if (card.suit === 'spades' && card.value === '2') {
+                    cardElement.className += ' spade-2';
+                }
+                cardElement.textContent = card.value + suitSymbols[card.suit];
+                cardElement.onclick = () => selectPartner(card);
+                container.appendChild(cardElement);
+            });
+        }
+
+        // Select partner card
+        function selectPartner(card) {
+            gameState.partnerCard = card;
+            gameState.phase = 'playing';
+            gameState.currentPlayerIndex = gameState.currentBidder;
+            gameState.players.forEach(player => player.isCurrentTurn = false);
+            gameState.players[gameState.currentBidder].isCurrentTurn = true;
+            gameState.trickLeader = gameState.currentBidder;
+            
+            document.getElementById('current-phase').textContent = 'Playing';
+            document.getElementById('partner-selection').style.display = 'none';
+            document.getElementById('trick-area').style.display = 'block';
+            document.getElementById('trick-leader').textContent = gameState.players[gameState.trickLeader].name;
+            
+            updateDisplay();
+        }
+
+        // Redeal cards
+        function redealCards() {
+            dealCards();
+            startBiddingPhase();
+            updateDisplay();
+        }
+
+        // Play a card
+        function playCard(playerIndex, cardIndex) {
+            if (gameState.phase !== 'playing') return;
+            if (playerIndex !== gameState.currentPlayerIndex) return;
+            
+            const player = gameState.players[playerIndex];
+            const card = player.cards[cardIndex];
+            
+            // Check if it's a valid play
+            if (!isValidPlay(card, player.cards)) {
+                alert('Invalid play! You must follow suit if possible.');
+                return;
+            }
+            
+            // Remove card from player's hand
+            player.cards.splice(cardIndex, 1);
+            
+            // Add to current trick
+            gameState.currentTrick.push({
+                card: card,
+                player: playerIndex,
+                playerName: player.name
+            });
+            
+            // Check if partner is revealed
+            if (card.suit === gameState.partnerCard.suit && card.value === gameState.partnerCard.value) {
+                player.isPartner = true;
+                gameState.partnerRevealed = true;
+            }
+            
+            // Move to next player or end trick
+            if (gameState.currentTrick.length === 5) {
+                endTrick();
+            } else {
+                nextPlayer();
+            }
+            
+            updateDisplay();
+        }
+
+        // Check if a play is valid
+        function isValidPlay(card, playerCards) {
+            // If it's the first card of the trick, any card is valid
+            if (gameState.currentTrick.length === 0) return true;
+            
+            // Spade of 2 can always be played
+            if (card.suit === 'spades' && card.value === '2') return true;
+            
+            const leadSuit = gameState.currentTrick[0].card.suit;
+            
+            // If player has cards of the lead suit, they must play it
+            const hasSuit = playerCards.some(c => c.suit === leadSuit);
+            if (hasSuit && card.suit !== leadSuit) return false;
+            
+            return true;
+        }
+
+        // Move to next player
+        function nextPlayer() {
+            gameState.players[gameState.currentPlayerIndex].isCurrentTurn = false;
+            gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % 5;
+            gameState.players[gameState.currentPlayerIndex].isCurrentTurn = true;
+        }
+
+        // End current trick
+        function endTrick() {
+            const winner = getTrickWinner();
+            gameState.trickLeader = winner;
+            gameState.currentPlayerIndex = winner;
+            
+            // Calculate points
+            const points = calculateTrickPoints();
+            
+            // Award points to winning team
+            if (gameState.players[winner].isBidder || gameState.players[winner].isPartner) {
+                // Bidding team wins
+                gameState.players[gameState.currentBidder].gameScore += points;
+                if (gameState.partnerRevealed) {
+                    const partnerIndex = gameState.players.findIndex(p => p.isPartner);
+                    if (partnerIndex !== -1) {
+                        gameState.players[partnerIndex].gameScore += points;
+                    }
+                }
+            } else {
+                // Opposition wins
+                for (let i = 0; i < 5; i++) {
+                    if (!gameState.players[i].isBidder && !gameState.players[i].isPartner) {
+                        gameState.players[i].gameScore += points;
+                    }
+                }
+            }
+            
+            // Clear trick
+            gameState.currentTrick = [];
+            
+            // Check if game is over (all cards played)
+            if (gameState.players[0].cards.length === 0) {
+                endGame();
+            } else {
+                // Next trick
+                gameState.players.forEach(player => player.isCurrentTurn = false);
+                gameState.players[gameState.trickLeader].isCurrentTurn = true;
+                document.getElementById('trick-leader').textContent = gameState.players[gameState.trickLeader].name;
+            }
+            
+            updateDisplay();
+        }
+
+        // Get trick winner
+        function getTrickWinner() {
+            const leadSuit = gameState.currentTrick[0].card.suit;
+            let winner = 0;
+            let winningCard = gameState.currentTrick[0].card;
+            
+            for (let i = 1; i < gameState.currentTrick.length; i++) {
+                const card = gameState.currentTrick[i].card;
+                
+                // Spade of 2 always wins
+                if (card.suit === 'spades' && card.value === '2') {
+                    winner = i;
+                    winningCard = card;
+                    continue;
+                }
+                
+                // If current winner is spade of 2, nothing else can win
+                if (winningCard.suit === 'spades' && winningCard.value === '2') {
+                    continue;
+                }
+                
+                // Trump beats non-trump
+                if (card.suit === gameState.trumpSuit && winningCard.suit !== gameState.trumpSuit) {
+                    winner = i;
+                    winningCard = card;
+                    continue;
+                }
+                
+                // Both trump or both non-trump, compare values
+                if ((card.suit === gameState.trumpSuit && winningCard.suit === gameState.trumpSuit) ||
+                    (card.suit === leadSuit && winningCard.suit === leadSuit && 
+                     card.suit !== gameState.trumpSuit && winningCard.suit !== gameState.trumpSuit)) {
+                    
+                    if (getCardValue(card) > getCardValue(winningCard)) {
+                        winner = i;
+                        winningCard = card;
+                    }
+                }
+            }
+            
+            return gameState.currentTrick[winner].player;
+        }
+
+        // Get card value for comparison
+        function getCardValue(card) {
+            const valueOrder = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
+            return valueOrder.indexOf(card.value);
+        }
+
+        // Calculate points in current trick
+        function calculateTrickPoints() {
+            let points = 0;
+            gameState.currentTrick.forEach(item => {
+                const card = item.card;
+                if (card.value === '5') points += 5;
+                else if (card.value === '10') points += 10;
+                else if (card.value === 'A') points += 10;
+                else if (card.suit === 'spades' && card.value === '2') points += 30;
+            });
+            return points;
+        }
+
+        // End current game
+        function endGame() {
+            gameState.phase = 'game-end';
+            
+            // Calculate final scores
+            const bidderIndex = gameState.currentBidder;
+            const partnerIndex = gameState.players.findIndex(p => p.isPartner);
+            const bidAmount = gameState.currentBid;
+            
+            // Calculate bidding team's total points
+            let biddingTeamPoints = 0;
+            if (partnerIndex !== -1) {
+                // Partner revealed - count both players' points
+                biddingTeamPoints = gameState.players[bidderIndex].gameScore;
+            } else {
+                // Partner not revealed - only bidder's points count
+                biddingTeamPoints = gameState.players[bidderIndex].gameScore;
+            }
+            
+            // Calculate opposition points
+            let oppositionPoints = 0;
+            for (let i = 0; i < 5; i++) {
+                if (i !== bidderIndex && i !== partnerIndex) {
+                    oppositionPoints += gameState.players[i].gameScore;
+                }
+            }
+            
+            // Reset game scores
+            gameState.players.forEach(player => {
+                player.gameScore =         
+        // Update display
+        function updateDisplay() {
+            updatePlayersDisplay();
+            updateTrickDisplay();
+            updateScoreboard();
+        }
+        
+        // Update players display
+        function updatePlayersDisplay() {
+            const container = document.getElementById('players-container');
+            container.innerHTML = '';
+            
+            gameState.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+                
+                if (player.isCurrentTurn) playerDiv.classList.add('current-turn');
+                if (player.isBidder) playerDiv.classList.add('bidder');
+                if (player.isPartner) playerDiv.classList.add('partner');
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'player-name';
+                nameDiv.innerHTML = `
+                    <span>${player.name}</span>
+                    <span class="player-score">Score: ${player.gameScore}</span>
+                `;
+                
+                const cardsDiv = document.createElement('div');
+                cardsDiv.className = 'player-cards';
+                
+                player.cards.forEach((card, cardIndex) => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = `card ${card.suit}`;
+                    
+                    if (card.suit === 'spades' && card.value === '2') {
+                        cardDiv.classList.add('spade-2');
+                    }
+                    
+                    cardDiv.textContent = card.value + suitSymbols[card.suit];
+                    
+                    if (gameState.phase === 'playing' && player.isCurrentTurn) {
+                        if (isValidPlay(card, player.cards)) {
+                            cardDiv.classList.add('playable');
+                            cardDiv.onclick = () => playCard(index, cardIndex);
+                        }
+                    }
+                    
+                    cardsDiv.appendChild(cardDiv);
+                });
+                
+                playerDiv.appendChild(nameDiv);
+                playerDiv.appendChild(cardsDiv);
+                container.appendChild(playerDiv);
+            });
+        }
+        
+        // Update trick display
+        function updateTrickDisplay() {
+            if (gameState.phase !== 'playing') return;
+            
+            const trickCards = document.getElementById('trick-cards');
+            trickCards.innerHTML = '';
+            
+            let trickPoints = 0;
+            gameState.currentTrick.forEach(item => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `trick-card ${item.card.suit}`;
+                cardDiv.setAttribute('data-player', item.playerName);
+                
+                if (item.card.suit === 'spades' && item.card.value === '2') {
+                    cardDiv.classList.add('spade-2');
+                }
+                
+                cardDiv.textContent = item.card.value + suitSymbols[item.card.suit];
+                trickCards.appendChild(cardDiv);
+                
+                // Calculate points
+                const card = item.card;
+                if (card.value === '5') trickPoints += 5;
+                else if (card.value === '10') trickPoints += 10;
+                else if (card.value === 'A') trickPoints += 10;
+                else if (card.suit === 'spades' && card.value === '2') trickPoints += 30;
+            });
+            
+            document.getElementById('trick-points').textContent = trickPoints;
+        }
+        
+        // Update scoreboard
+        function updateScoreboard() {
+            document.getElementById('game-number').textContent = gameState.gameNumber;
+            
+            const scoreTable = document.getElementById('score-table');
+            scoreTable.innerHTML = '';
+            
+            // Header row
+            const headerRow = ['Player', 'Game 1', 'Game 2', 'Game 3', 'Game 4', 'Game 5', 'Game 6', 'Game 7', 'Game 8', 'Game 9', 'Game 10', 'Total'];
+            headerRow.forEach(header => {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'score-header';
+                headerDiv.textContent = header;
+                scoreTable.appendChild(headerDiv);
+            });
+            
+            // Player rows
+            gameState.players.forEach((player, index) => {
+                // Player name
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'score-cell';
+                nameDiv.textContent = player.name;
+                scoreTable.appendChild(nameDiv);
+                
+                // Game scores
+                for (let game = 0; game < gameState.totalGames; game++) {
+                    const scoreDiv = document.createElement('div');
+                    scoreDiv.className = 'score-cell';
+                    scoreDiv.textContent = gameState.scores[index][game] || '-';
+                    scoreTable.appendChild(scoreDiv);
+                }
+                
+                // Total score
+                const totalDiv = document.createElement('div');
+                totalDiv.className = 'score-cell';
+                totalDiv.style.fontWeight = 'bold';
+                totalDiv.textContent = player.totalScore;
+                scoreTable.appendChild(totalDiv);
+            });
+        }
+        
+        // Initialize game on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePlayers();
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
