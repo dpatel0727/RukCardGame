@@ -379,23 +379,23 @@
         </div>
 
         <div class="controls">
-            <button class="btn" id="start-game" onclick="startGame()">Start New Game</button>
-            <button class="btn danger" id="redeal" onclick="redealCards()" style="display: none;">Re-deal Cards</button>
+            <button class="btn" id="start-game">Start New Game</button>
+            <button class="btn danger" id="redeal" style="display: none;">Re-deal Cards</button>
         </div>
 
         <div class="bidding-controls" id="bidding-controls" style="display: none;">
             <h3>Bidding Phase</h3>
             <p>Current turn: <span id="bidding-player"></span></p>
             <div class="bid-buttons" id="bid-buttons"></div>
-            <button class="btn" onclick="passBid()">Pass</button>
+            <button class="btn" id="pass-bid">Pass</button>
         </div>
 
         <div class="trump-selection" id="trump-selection" style="display: none;">
             <h3>Select Trump Suit:</h3>
-            <button class="trump-btn hearts" onclick="selectTrump('hearts')">♥ Hearts</button>
-            <button class="trump-btn diamonds" onclick="selectTrump('diamonds')">♦ Diamonds</button>
-            <button class="trump-btn clubs" onclick="selectTrump('clubs')">♣ Clubs</button>
-            <button class="trump-btn spades" onclick="selectTrump('spades')">♠ Spades</button>
+            <button class="trump-btn hearts" id="trump-hearts">♥ Hearts</button>
+            <button class="trump-btn diamonds" id="trump-diamonds">♦ Diamonds</button>
+            <button class="trump-btn clubs" id="trump-clubs">♣ Clubs</button>
+            <button class="trump-btn spades" id="trump-spades">♠ Spades</button>
         </div>
 
         <div class="partner-selection" id="partner-selection" style="display: none;">
@@ -426,7 +426,7 @@
         <div class="game-over-content">
             <h2>Game Over!</h2>
             <p id="winner-text"></p>
-            <button class="btn" onclick="startNewSeries()">Start New Series</button>
+            <button class="btn" id="start-new-series">Start New Series</button>
         </div>
     </div>
 
@@ -973,9 +973,33 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            initializePlayers();
-            updateDisplay();
+        // Initialize game
+        initializePlayers();
+        updateDisplay();
+        
+        // Add event listeners for buttons
+        document.getElementById('start-game').addEventListener('click', startGame);
+        document.getElementById('redeal').addEventListener('click', redealCards);
+        document.getElementById('pass-bid').addEventListener('click', passBid);
+        
+        // Trump selection buttons
+        document.getElementById('trump-hearts').addEventListener('click', function() {
+            selectTrump('hearts');
         });
+        document.getElementById('trump-diamonds').addEventListener('click', function() {
+            selectTrump('diamonds');
+        });
+        document.getElementById('trump-clubs').addEventListener('click', function() {
+            selectTrump('clubs');
+        });
+        document.getElementById('trump-spades').addEventListener('click', function() {
+            selectTrump('spades');
+        });
+        
+        // Start new series button
+        document.getElementById('start-new-series').addEventListener('click', startNewSeries);
+    });
+
     </script>
 </body>
 </html>
