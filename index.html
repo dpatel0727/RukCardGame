@@ -971,3 +971,8 @@
             document.getElementById('game-over').style.display = 'none';
             startGame(); // Start the first game of the new series
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePlayers();
+            updateDisplay();
+        });
