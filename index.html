@@ -972,33 +972,169 @@
             startGame(); // Start the first game of the new series
         }
 
+        // Update display
+        function updateDisplay() {
+            updatePlayersDisplay();
+            updateTrickDisplay();
+            updateScoreboard();
+        }
+        
+        // Update players display
+        function updatePlayersDisplay() {
+            const container = document.getElementById('players-container');
+            container.innerHTML = '';
+            
+            gameState.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+                
+                if (player.isCurrentTurn) playerDiv.classList.add('current-turn');
+                if (player.isBidder) playerDiv.classList.add('bidder');
+                if (player.isPartner) playerDiv.classList.add('partner');
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'player-name';
+                nameDiv.innerHTML = `
+                    <span>${player.name}</span>
+                    <span class="player-score">Score: ${player.gameScore}</span>
+                `;
+                
+                const cardsDiv = document.createElement('div');
+                cardsDiv.className = 'player-cards';
+                
+                player.cards.forEach((card, cardIndex) => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = `card ${card.suit}`;
+                    
+                    if (card.suit === 'spades' && card.value === '2') {
+                        cardDiv.classList.add('spade-2');
+                    }
+                    
+                    cardDiv.textContent = card.value + suitSymbols[card.suit];
+                    
+                    if (gameState.phase === 'playing' && player.isCurrentTurn) {
+                        if (isValidPlay(card, player.cards)) {
+                            cardDiv.classList.add('playable');
+                            cardDiv.onclick = () => playCard(index, cardIndex);
+                        }
+                    }
+                    
+                    cardsDiv.appendChild(cardDiv);
+                });
+                
+                playerDiv.appendChild(nameDiv);
+                playerDiv.appendChild(cardsDiv);
+                container.appendChild(playerDiv);
+            });
+        }
+
+        // Update trick display
+        function updateTrickDisplay() {
+            if (gameState.phase !== 'playing') return;
+            
+            const trickCards = document.getElementById('trick-cards');
+            trickCards.innerHTML = '';
+            
+            let trickPoints = 0;
+            gameState.currentTrick.forEach(item => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `trick-card ${item.card.suit}`;
+                cardDiv.setAttribute('data-player', item.playerName);
+                
+                if (item.card.suit === 'spades' && item.card.value === '2') {
+                    cardDiv.classList.add('spade-2');
+                }
+                
+                cardDiv.textContent = item.card.value + suitSymbols[item.card.suit];
+                trickCards.appendChild(cardDiv);
+                
+                // Calculate points
+                const card = item.card;
+                if (card.value === '5') trickPoints += 5;
+                else if (card.value === '10') trickPoints += 10;
+                else if (card.value === 'A') trickPoints += 10;
+                else if (card.suit === 'spades' && card.value === '2') trickPoints += 30;
+            });
+            
+            document.getElementById('trick-points').textContent = trickPoints;
+        }
+        
+        // Update scoreboard
+        function updateScoreboard() {
+            document.getElementById('game-number').textContent = gameState.gameNumber;
+            document.getElementById('total-games').textContent = gameState.totalGames;
+            
+            const scoreTable = document.getElementById('score-table');
+            scoreTable.innerHTML = '';
+            
+            // Header row
+            const headerRow = ['Player'];
+            for (let i = 1; i <= gameState.totalGames; i++) {
+                headerRow.push(`Game ${i}`);
+            }
+            headerRow.push('Total');
+            
+            headerRow.forEach(header => {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'score-header';
+                headerDiv.textContent = header;
+                scoreTable.appendChild(headerDiv);
+            });
+            
+            // Player rows
+            gameState.players.forEach((player, index) => {
+                // Player name
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'score-cell';
+                nameDiv.textContent = player.name;
+                scoreTable.appendChild(nameDiv);
+                
+                // Game scores
+                for (let game = 0; game < gameState.totalGames; game++) {
+                    const scoreDiv = document.createElement('div');
+                    scoreDiv.className = 'score-cell';
+                    scoreDiv.textContent = gameState.scores[index][game] || '-';
+                    scoreTable.appendChild(scoreDiv);
+                }
+                
+                // Total score
+                const totalDiv = document.createElement('div');
+                totalDiv.className = 'score-cell';
+                totalDiv.style.fontWeight = 'bold';
+                totalDiv.textContent = player.totalScore;
+                scoreTable.appendChild(totalDiv);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-        // Initialize game
-        initializePlayers();
-        updateDisplay();
-        
-        // Add event listeners for buttons
-        document.getElementById('start-game').addEventListener('click', startGame);
-        document.getElementById('redeal').addEventListener('click', redealCards);
-        document.getElementById('pass-bid').addEventListener('click', passBid);
-        
-        // Trump selection buttons
-        document.getElementById('trump-hearts').addEventListener('click', function() {
-            selectTrump('hearts');
+            // Initialize game
+            initializePlayers();
+            updateDisplay();
+            
+            // Add event listeners for buttons
+            document.getElementById('start-game').addEventListener('click', startGame);
+            document.getElementById('redeal').addEventListener('click', redealCards);
+            
+            // Pass bid button - using more flexible selector
+            const passButton = document.querySelector('.bidding-controls .btn');
+            if (passButton) {
+                passButton.addEventListener('click', passBid);
+            }
+            
+            // Trump selection buttons - using more flexible selectors
+            document.querySelectorAll('.trump-btn').forEach(button => {
+                const suit = button.className.split(' ')[1]; // Get suit from class
+                if (suit) {
+                    button.addEventListener('click', () => selectTrump(suit));
+                }
+            });
+            
+            // Start new series button - using more flexible selector
+            const newSeriesButton = document.querySelector('#game-over .btn');
+            if (newSeriesButton) {
+                newSeriesButton.addEventListener('click', startNewSeries);
+            }
         });
-        document.getElementById('trump-diamonds').addEventListener('click', function() {
-            selectTrump('diamonds');
-        });
-        document.getElementById('trump-clubs').addEventListener('click', function() {
-            selectTrump('clubs');
-        });
-        document.getElementById('trump-spades').addEventListener('click', function() {
-            selectTrump('spades');
-        });
-        
-        // Start new series button
-        document.getElementById('start-new-series').addEventListener('click', startNewSeries);
-    });
 
     </script>
 </body>
